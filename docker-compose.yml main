@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    networks:
+      - webnet
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://avnadmin:<password>@db:5432/devopss2
+    networks:
+      - webnet
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: devopss2
+      POSTGRES_USER: avnadmin
+      POSTGRES_PASSWORD: AVNS_9sfbNX8bjMkBF6QbzGe
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - webnet
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+    networks:
+      - webnet
+  
+   mysql-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: npm
+      MYSQL_USER: npm
+      MYSQL_PASSWORD: npm
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - webnet
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    depends_on:
+      - mysql-db
+    environment:
+      DB_MYSQL_HOST: mysql-db
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: npm
+      DB_MYSQL_PASSWORD: npm
+      DB_MYSQL_NAME: npm
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+      - "8090:81"
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+    networks:
+      - webnet
+
+volumes:
+  pgdata:
+  mysql-data:
+  npm-data:
+  npm-letsencrypt:
+
+networks:
+  webnet:
