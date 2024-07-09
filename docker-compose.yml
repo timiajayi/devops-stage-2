@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    networks:
+      - webnet
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=app
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=changethis123
+    depends_on:
+      - db
+    networks:
+      - webnet
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: changethis123
+      POSTGRES_DB: app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - webnet
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DEFAULT_USERNAME: app
+      ADMINER_DEFAULT_PASSWORD: changethis123
+    networks:
+      - webnet
+
+  mysql-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: npm
+      MYSQL_USER: npm
+      MYSQL_PASSWORD: npm
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - webnet
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    depends_on:
+      - mysql-db
+    environment:
+      DB_MYSQL_HOST: mysql-db
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: npm
+      DB_MYSQL_PASSWORD: npm
+      DB_MYSQL_NAME: npm
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+      - "8090:81"
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+    networks:
+      - webnet
+
+volumes:
+  pgdata:
+  mysql-data:
+  npm-data:
+  npm-letsencrypt:
+
+networks:
+  webnet:
+
